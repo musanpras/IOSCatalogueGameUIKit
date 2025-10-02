@@ -1,0 +1,39 @@
+disabled_rules:
+  - trailing_whitespace
+  - identifier_name
+  - force_cast
+  - force_unwrapping
+included:
+  - .
+opt_in_rules:
+  - attributes
+  - closure_end_indentation
+  - explicit_self
+  - fatal_error_message
+  - first_where
+  - implicit_return
+  - nimble_operator
+  - private_action
+  - redundant_set_access_control
+  - sorted_imports
+  - yoda_condition
+line_length:
+  warning: 140
+  error: 180
+type_body_length:
+  warning: 300
+  error: 400
+file_length:
+  warning: 600
+  error: 1000
+function_body_length:
+  warning: 60
+  error: 100
+identifier_name:
+  min_length:
+    warning: 2
+    error: 1
+  excluded:
+    - id
+trailing_comma:
+  mandatory_comma: true
