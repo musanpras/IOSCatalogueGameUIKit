@@ -9,10 +9,13 @@ final class GameDetailViewController: UIViewController {
     private let infoLabel = UILabel()
     private let textLabel = UILabel()
     private let action = UIButton(type: .custom)
+    private let fav = UIButton(type: .custom)
     private let service: GameServiceProtocol = GameService()
+    private let favorites = FavoritesRepository.shared
     private let gameID: Int
     private let titleText: String
     private let activityIndicator = UIActivityIndicatorView(style: .large)
+    private var current: GameDetail?
     init(gameID: Int, titleText: String) {
         self.gameID = gameID
         self.titleText = titleText
@@ -51,9 +54,20 @@ final class GameDetailViewController: UIViewController {
         action.layer.masksToBounds = false
         action.addTarget(self, action: #selector(touchDown), for: .touchDown)
         action.addTarget(self, action: #selector(touchUp), for: [.touchUpInside, .touchUpOutside, .touchCancel])
+        fav.backgroundColor = .systemPink
+        fav.setTitle("Add to Favorites", for: .normal)
+        fav.addTarget(self, action: #selector(toggleFav), for: .touchUpInside)
+        fav.titleLabel?.font = UIFont.systemFont(ofSize: 18, weight: .bold)
+        fav.layer.cornerRadius = 10
+        fav.clipsToBounds = true
+        fav.layer.shadowColor = UIColor.black.cgColor
+        fav.layer.shadowOffset = CGSize(width: 0, height: 5)
+        fav.layer.shadowRadius = 5
+        fav.layer.shadowOpacity = 0.5
+        fav.layer.masksToBounds = false
         stack.axis = .vertical
         stack.spacing = 12
-        [cover, titleLabel, infoLabel, textLabel, action].forEach { stack.addArrangedSubview($0) }
+        [cover, titleLabel, infoLabel, textLabel, fav, action].forEach { stack.addArrangedSubview($0) }
         scroll.addSubview(stack)
         view.addSubview(scroll)
         scroll.translatesAutoresizingMaskIntoConstraints = false
@@ -73,11 +87,18 @@ final class GameDetailViewController: UIViewController {
         ])
         activityIndicator.hidesWhenStopped = true
     }
+    private func updateFavButton() {
+        let on = favorites.isFavorite(id: gameID)
+        fav.setTitle(on ? "Remove from Favorites" : "Add to Favorites", for: .normal)
+    }
+        
     @MainActor private func load() async {
         do {
+            fav.isHidden = true
             action.isHidden = true
             activityIndicator.startAnimating()
             let detail = try await service.fetchDetail(id: gameID)
+            current = detail
             titleLabel.text = detail.name
             let g = (detail.genres ?? []).map { $0.name }.joined(separator: ", ")
             let rating = detail.rating.map { String(format: "%.1f ★", $0) } ?? "No rating"
@@ -88,7 +109,9 @@ final class GameDetailViewController: UIViewController {
             textLabel.text = detail.descriptionRaw ?? "No description"
             action.isHidden = detail.website == nil
             cover.image = await ImageLoader.shared.load(detail.backgroundImage)
+            updateFavButton()
             activityIndicator.stopAnimating()
+            fav.isHidden = false
             action.isHidden = false
             
         } catch {
@@ -118,6 +141,15 @@ final class GameDetailViewController: UIViewController {
                     }
                 } catch { }
             }
+        }
+    
+    @objc private func toggleFav() {
+            guard let d = current else { return }
+            let g = Game(id: d.id, name: d.name, backgroundImage: d.backgroundImage, rating: d.rating, released: d.released, genres: d.genres)
+            FavoritesRepository.shared.toggle(game: g)
+            UIImpactFeedbackGenerator(style: .light).impactOccurred()
+            updateFavButton()
+
         }
     
 }

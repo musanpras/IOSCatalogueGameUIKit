@@ -9,6 +9,7 @@ final class GamesListViewController: UIViewController {
     private var searchController = UISearchController(searchResultsController: nil)
     private var searchTask: Task<Void, Never>?
     private let refresh = UIRefreshControl()
+    private let favorites = FavoritesRepository.shared
     override func viewDidLoad() {
         super.viewDidLoad()
         title = "Games"
@@ -111,7 +112,13 @@ extension GamesListViewController: UITableViewDataSource, UITableViewDelegate {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! GameCell
         let item = data[indexPath.row]
-        cell.configure(with: item)
+        cell.configure(with: item, isFav: favorites.isFavorite(id: item.id)) { [weak self] id, game in
+
+                    self?.favorites.toggle(game: game)
+
+                    tableView.reloadRows(at: [indexPath], with: .automatic)
+
+                }
         return cell
     }
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

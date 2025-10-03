@@ -6,7 +6,8 @@ final class GameCell: UITableViewCell {
     private let ratingLabel = UILabel()
     private let releaseLabel = UILabel()
     private let fav = UIButton(type: .system)
-    private var id: Int?
+    private var game: Game?
+    private var onToggle: ((Int, Game) -> Void)?
     private let activityIndicator = UIActivityIndicatorView(style: .medium)
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -23,6 +24,7 @@ final class GameCell: UITableViewCell {
         ratingLabel.textColor = .secondaryLabel
         releaseLabel.font = .preferredFont(forTextStyle: .subheadline)
         releaseLabel.textColor = .secondaryLabel
+        fav.tintColor = .systemPink
         fav.setImage(UIImage(systemName: "heart"), for: .normal)
         fav.addTarget(self, action: #selector(toggleFav), for: .touchUpInside)
         let v = UIStackView(arrangedSubviews: [titleLabel, ratingLabel, releaseLabel])
@@ -49,8 +51,9 @@ final class GameCell: UITableViewCell {
         activityIndicator.hidesWhenStopped = true
     }
     required init?(coder: NSCoder) { nil }
-    func configure(with item: Game) {
-        id = item.id
+    func configure(with item: Game, isFav: Bool, onToggle: @escaping (Int, Game) -> Void)  {
+        game = item
+        self.onToggle = onToggle
         titleLabel.text = item.name
         let rating = item.rating.map { String(format: "%.1f ★", $0) } ?? "No rating"
         let released = item.released ?? "—"
@@ -61,19 +64,12 @@ final class GameCell: UITableViewCell {
             cover.image = await ImageLoader.shared.load(item.backgroundImage)
             activityIndicator.stopAnimating()
         }
-        updateFavIcon()
-    }
-    private func updateFavIcon() {
-        guard let id else { return }
-        let on = FavoritesStore.shared.isFavorite(id: id)
-        let name = on ? "heart.fill" : "heart"
-        fav.tintColor = .systemPink
+        let name = isFav ? "heart.fill" : "heart"
         fav.setImage(UIImage(systemName: name), for: .normal)
     }
     @objc private func toggleFav() {
-        guard let id else { return }
-        FavoritesStore.shared.toggle(id: id)
-        updateFavIcon()
+        guard let g = game else { return }
         UIImpactFeedbackGenerator(style: .light).impactOccurred()
+        onToggle?(g.id, g)
     }
 }
