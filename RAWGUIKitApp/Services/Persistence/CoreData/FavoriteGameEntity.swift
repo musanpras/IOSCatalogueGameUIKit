@@ -1,16 +1,17 @@
-import Foundation
 import CoreData
 
 @objc(FavoriteGameEntity)
-public class FavoriteGameEntity: NSManagedObject {
-    
-    @nonobjc public class func fetchRequest() -> NSFetchRequest<FavoriteGameEntity> {
+final class FavoriteGameEntity: NSManagedObject {
+    @NSManaged var id: Int64
+    @NSManaged var name: String
+    @NSManaged var backgroundImageURL: String?
+    @NSManaged var released: String?
+    @NSManaged var rating: Double
+}
+
+extension FavoriteGameEntity {
+    @nonobjc class func fetchRequest() -> NSFetchRequest<FavoriteGameEntity> {
         return NSFetchRequest<FavoriteGameEntity>(entityName: "FavoriteGameEntity")
     }
-    
-    @NSManaged public var id: Int64
-    @NSManaged public var name: String
-    @NSManaged public var backgroundImageURL: String?
-    @NSManaged public var released: String?
-    @NSManaged public var rating: Double
 }
+
